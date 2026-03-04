@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engagement Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #FDFBF7; }
+        .font-mono { font-family: 'JetBrains+Mono', monospace; }
+        .category-card { transition: all 0.3s ease; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .header-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+            padding: 2px 12px;
+            color: white;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .header-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease, opacity 0.3s ease; }
+        .hidden-modal { opacity: 0; pointer-events: none; }
+        .hidden-modal .modal-content { transform: scale(0.95); opacity: 0; }
+
+        .auth-card {
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Overlay Loading */
+        #initial-loader {
+            position: fixed;
+            inset: 0;
+            background: #FDFBF7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .view-section { display: none; }
+        .view-active { display: flex; }
+    </style>
+</head>
+<body class="pb-32">
+
+    <!-- ================= INITIAL LOADER ================= -->
+    <div id="initial-loader">
+        <div class="w-12 h-12 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-blue-900 font-bold animate-pulse uppercase tracking-widest text-xs">Menyemak Sesi...</p>
+    </div>
+
+    <!-- ================= LOGIN PAGE ================= -->
+    <div id="login-section" class="min-h-screen view-section view-active items-center justify-center p-6">
+        <div class="auth-card w-full max-w-md p-8 border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center p-4 bg-blue-50 rounded-3xl mb-4">
+                    <i data-lucide="log-in" class="text-blue-600 w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Log Masuk</h2>
+                <p class="text-slate-400 text-sm">Sila masuk untuk akses planner anda</p>
+            </div>
+
+            <div class="space-y-4">
+                <input id="login-email" type="email" placeholder="Alamat Emel"
+                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 transition-all text-sm">
+
+                <input id="login-password" type="password" placeholder="Kata Laluan"
+                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 transition-all text-sm">
+
+                <button onclick="login()" 
+                    class="w-full bg-blue-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-800 transition-all active:scale-95 text-xs uppercase tracking-widest mt-2">
+                    Masuk Sekarang
+                </button>
+
+                <p class="text-center text-sm text-slate-500 mt-4">
+                    Belum ada akaun? 
+                    <button onclick="showRegister()" class="text-blue-600 font-bold hover:underline">Daftar Sini</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= REGISTER PAGE ================= -->
+    <div id="register-section" class="min-h-screen view-section items-center justify-center p-6">
+        <div class="auth-card w-full max-w-md p-8 border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center p-4 bg-green-50 rounded-3xl mb-4">
+                    <i data-lucide="user-plus" class="text-green-600 w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Daftar Akaun</h2>
+                <p class="text-slate-400 text-sm">Cipta akaun baru untuk mula merancang</p>
+            </div>
+
+            <div class="space-y-4">
+                <input id="register-email" type="email" placeholder="Alamat Emel"
+                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 outline-none focus:border-green-500 transition-all text-sm">
+
+                <input id="register-password" type="password" placeholder="Kata Laluan (Min 6 aksara)"
+                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 outline-none focus:border-green-500 transition-all text-sm">
+
+                <button onclick="register()" 
+                    class="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-green-700 transition-all active:scale-95 text-xs uppercase tracking-widest mt-2">
+                    Cipta Akaun
+                </button>
+
+                <p class="text-center text-sm text-slate-500 mt-4">
+                    Sudah ada akaun? 
+                    <button onclick="showLogin()" class="text-blue-600 font-bold hover:underline">Log Masuk</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN APP SECTION ================= -->
+    <div id="app-section" class="hidden">
+        <header class="bg-[#1E3A8A] text-white pt-10 pb-24 px-6 rounded-b-[40px] shadow-xl relative overflow-hidden text-center">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+            
+            <div class="max-w-4xl mx-auto relative z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <div id="sync-status" class="text-[10px] uppercase font-bold tracking-widest text-blue-100/50 flex items-center">
+                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-2 animate-spin"></i> Memuatkan...
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="user-display" class="text-[10px] opacity-70 hidden md:block"></span>
+                        <button onclick="openLogoutModal()" class="bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border border-red-400/30">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+
+                <div class="inline-flex items-center justify-center p-3 bg-white/10 backdrop-blur-md rounded-full mb-4 border border-white/20">
+                    <i data-lucide="heart" class="text-pink-400 fill-pink-400 w-6 h-6"></i>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2 uppercase italic text-white shadow-sm">Engagement Planner</h1>
+                
+                <div id="countdown-container" class="mb-6 flex justify-center gap-2 md:gap-4">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-2 md:p-3 min-w-[60px] md:min-w-[80px] border border-white/10">
+                        <div id="cd-days" class="text-xl md:text-2xl font-black font-mono leading-none">00</div>
+                        <div class="text-[8px] md:text-[10px] uppercase font-bold opacity-60">Hari</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-2 md:p-3 min-w-[60px] md:min-w-[80px] border border-white/10">
+                        <div id="cd-hours" class="text-xl md:text-2xl font-black font-mono leading-none">00</div>
+                        <div class="text-[8px] md:text-[10px] uppercase font-bold opacity-60">Jam</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-2 md:p-3 min-w-[60px] md:min-w-[80px] border border-white/10">
+                        <div id="cd-mins" class="text-xl md:text-2xl font-black font-mono leading-none">00</div>
+                        <div class="text-[8px] md:text-[10px] uppercase font-bold opacity-60">Min</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-2 md:p-3 min-w-[60px] md:min-w-[80px] border border-white/10">
+                        <div id="cd-secs" class="text-xl md:text-2xl font-black font-mono leading-none text-pink-300">00</div>
+                        <div class="text-[8px] md:text-[10px] uppercase font-bold opacity-60 text-pink-300">Saat</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-4 mb-6">
+                    <div class="flex flex-col items-center">
+                        <span class="text-[8px] md:text-[10px] uppercase font-bold opacity-50 mb-1 tracking-widest">Tarikh</span>
+                        <input type="date" id="event-date" onchange="updateEventInfo('date', this.value)" class="header-input">
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[8px] md:text-[10px] uppercase font-bold opacity-50 mb-1 tracking-widest">Tetamu</span>
+                        <input type="number" id="event-pax" placeholder="Pax" onchange="updateEventInfo('pax', this.value)" class="header-input w-20 md:w-24 text-center">
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[8px] md:text-[10px] uppercase font-bold opacity-50 mb-1 tracking-widest">Tema Baju</span>
+                        <input type="text" id="event-theme" placeholder="Warna Baju" onchange="updateEventInfo('theme', this.value)" class="header-input w-24 md:w-32 text-center">
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[8px] md:text-[10px] uppercase font-bold opacity-50 mb-1 tracking-widest">Pelamin</span>
+                        <input type="text" id="event-dais" placeholder="Warna Pelamin" onchange="updateEventInfo('dais', this.value)" class="header-input w-28 md:w-40 text-center">
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content" class="max-w-2xl mx-auto px-4 md:px-6 relative z-20">
+            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100 flex flex-col md:flex-row gap-6 items-center mb-10 -mt-12">
+                <div class="flex-1 text-center md:text-left">
+                    <p class="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1">Anggaran Keseluruhan</p>
+                    <h3 id="grand-total" class="text-3xl md:text-4xl lg:text-5xl font-black text-slate-800 font-mono text-blue-900 leading-tight">RM 0.00</h3>
+                </div>
+                <div class="h-12 w-px bg-slate-100 hidden md:block"></div>
+                <div class="flex gap-4 md:gap-8">
+                    <div class="text-center">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-1 border border-blue-100">
+                            <i data-lucide="calculator" class="w-4 h-4 md:w-5 md:h-5"></i>
+                        </div>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Barang</p>
+                        <p id="total-items" class="font-bold text-slate-700 md:text-lg">0</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 mb-1 border border-green-100">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 md:w-5 md:h-5"></i>
+                        </div>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Siap</p>
+                        <p id="completed-items" class="font-bold text-slate-700 md:text-lg">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="categories-container" class="flex flex-col gap-6 md:gap-8 items-center"></div>
+
+            <div class="text-center py-10 opacity-50 max-w-2xl mx-auto">
+                <p class="text-xs uppercase tracking-[0.2em] font-bold mb-1">Engagement Planner Cloud</p>
+                <button onclick="resetDataToDefault()" class="mt-4 text-[10px] text-red-400 hover:text-red-600 underline">Reset Senarai ke Asal</button>
+            </div>
+        </main>
+
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-[#1E3A8A] text-white py-4 px-6 rounded-2xl shadow-2xl flex justify-between items-center z-50 border border-white/20 backdrop-blur-md">
+            <div class="flex flex-col">
+                <span class="text-[10px] uppercase font-bold opacity-60">Ringkasan</span>
+                <span id="floating-total" class="text-lg font-mono font-bold leading-none">RM 0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <span class="text-[10px] uppercase font-bold opacity-60">Kemajuan</span>
+                    <p id="floating-progress" class="text-md font-bold leading-none">0%</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Modal Tambah Item -->
+    <div id="add-item-modal" class="modal-overlay hidden-modal fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="modal-content bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden">
+            <div class="p-8 bg-[#1E3A8A] text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg uppercase tracking-tight">Tambah Item Baru</h3>
+                <button onclick="closeModal()" class="opacity-70 hover:opacity-100 transition-opacity bg-white/10 p-2 rounded-full">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-8 space-y-5">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1 ml-2 tracking-widest">Nama Barang</label>
+                    <input type="text" id="new-item-name" placeholder="Contoh: Baju Melayu" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1 ml-2 tracking-widest">Anggaran Harga (RM)</label>
+                    <input type="number" id="new-item-price" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 transition-all text-sm font-mono">
+                </div>
+                <div class="pt-2">
+                    <button onclick="confirmAddItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-3xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-sm">
+                        Simpan ke Senarai
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Kepastian Logout -->
+    <div id="logout-modal" class="modal-overlay hidden-modal fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="modal-content bg-white w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden text-center p-8">
+            <div class="inline-flex items-center justify-center p-4 bg-red-50 rounded-full mb-4">
+                <i data-lucide="log-out" class="text-red-500 w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-800 mb-2 uppercase tracking-tight">Log Keluar?</h3>
+            <p class="text-slate-400 text-sm mb-8 px-4">Adakah anda pasti mahu menamatkan sesi ini?</p>
+            
+            <div class="space-y-3">
+                <button onclick="confirmLogout()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-3xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs">
+                    Ya, Log Keluar
+                </button>
+                <button onclick="closeLogoutModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold py-4 rounded-3xl transition-all active:scale-95 uppercase tracking-widest text-xs">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js';
+
+        // 1. Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIxgeInH8iVR6RCGGcpe-GRZ41N2lgCBE",
+            authDomain: "engagement-planner-afiq.firebaseapp.com",
+            databaseURL: "https://engagement-planner-afiq-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "engagement-planner-afiq",
+            storageBucket: "engagement-planner-afiq.firebasestorage.app",
+            messagingSenderId: "786912887890",
+            appId: "1:786912887890:web:24825682c15a8242948b8b"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        // 2. Initial State
+        const INITIAL_STATE = {
+            eventInfo: { date: '', pax: '', theme: '', dais: '' },
+            fifiClothes: [],
+            fifiDulang: [],
+            afiqClothes: [],
+            afiqDulang: [],
+            others: []
+        };
+
+        let state = {...INITIAL_STATE};
+        let currentUser = null;
+        let currentActiveCategory = null;
+
+        const categories = [
+            { key: 'fifiClothes', title: 'Pakaian Wanita', color: 'bg-pink-500', icon: 'user' },
+            { key: 'fifiDulang', title: 'Dulang Wanita', color: 'bg-indigo-500', icon: 'package' },
+            { key: 'afiqClothes', title: 'Pakaian Lelaki', color: 'bg-blue-600', icon: 'user' },
+            { key: 'afiqDulang', title: 'Dulang Lelaki', color: 'bg-cyan-600', icon: 'package' },
+            { key: 'others', title: 'Lain-Lain', color: 'bg-slate-700', icon: 'truck' }
+        ];
+
+        // 3. Navigation Functions
+        window.showRegister = () => {
+            document.getElementById('login-section').classList.remove('view-active');
+            document.getElementById('register-section').classList.add('view-active');
+        };
+
+        window.showLogin = () => {
+            document.getElementById('register-section').classList.remove('view-active');
+            document.getElementById('login-section').classList.add('view-active');
+        };
+
+        // 4. Auth Functions
+        window.register = async () => {
+            const email = document.getElementById("register-email").value;
+            const password = document.getElementById("register-password").value;
+            if(!email || password.length < 6) return alert("Sila isi emel dan kata laluan (min 6 aksara)");
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert("Pendaftaran Gagal: " + error.message);
+            }
+        };
+
+        window.login = async () => {
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+            if(!email || !password) return alert("Sila isi emel dan kata laluan");
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert("Log Masuk Gagal: Emel atau Kata Laluan salah.");
+            }
+        };
+
+        window.openLogoutModal = () => document.getElementById('logout-modal').classList.remove('hidden-modal');
+        window.closeLogoutModal = () => document.getElementById('logout-modal').classList.add('hidden-modal');
+        window.confirmLogout = () => {
+            signOut(auth);
+            closeLogoutModal();
+        };
+
+        // 5. Auth State Observer
+        onAuthStateChanged(auth, (user) => {
+            const loader = document.getElementById("initial-loader");
+            const loginSec = document.getElementById("login-section");
+            const regSec = document.getElementById("register-section");
+            const appSection = document.getElementById("app-section");
+
+            if (user) {
+                currentUser = user;
+                loginSec.classList.remove("view-active");
+                regSec.classList.remove("view-active");
+                appSection.classList.remove("hidden");
+                document.getElementById("user-display").innerText = user.email;
+                setupDataListener();
+            } else {
+                currentUser = null;
+                appSection.classList.add("hidden");
+                loginSec.classList.add("view-active");
+                regSec.classList.remove("view-active");
+            }
+
+            if(loader) {
+                loader.style.opacity = "0";
+                setTimeout(() => loader.remove(), 500);
+            }
+            lucide.createIcons();
+        });
+
+        // 6. Data & Sync Logic
+        const setupDataListener = () => {
+            if (!currentUser) return;
+            const plannerRef = ref(database, 'engagementPlanner/' + currentUser.uid);
+            
+            onValue(plannerRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    state = data;
+                    render();
+                } else {
+                    saveToCloud(INITIAL_STATE);
+                }
+                document.getElementById('sync-status').innerHTML = '<i data-lucide="cloud-check" class="w-3 h-3 mr-2 text-green-400"></i> Cloud Aktif';
+                lucide.createIcons();
+            });
+        };
+
+        const saveToCloud = async (newData) => {
+            if (!currentUser) return;
+            try { 
+                const plannerRef = ref(database, 'engagementPlanner/' + currentUser.uid);
+                await set(plannerRef, newData); 
+            } catch (e) { 
+                console.error("Simpan gagal:", e); 
+            }
+        };
+
+        // 7. UI Render Functions
+        function render() {
+            const eventInfo = state.eventInfo || INITIAL_STATE.eventInfo;
+            document.getElementById('event-date').value = eventInfo.date;
+            document.getElementById('event-pax').value = eventInfo.pax;
+            document.getElementById('event-theme').value = eventInfo.theme || "";
+            document.getElementById('event-dais').value = eventInfo.dais || "";
+
+            const container = document.getElementById('categories-container');
+            container.innerHTML = '';
+            let grandTotal = 0, totalItemsCount = 0, completedItemsCount = 0;
+
+            categories.forEach(cat => {
+                const items = state[cat.key] || [];
+                const subtotal = items.reduce((acc, item) => acc + (item.price || 0), 0);
+                const completedCount = items.filter(i => i && i.completed).length;
+                const progress = Math.round((completedCount / items.length) * 100) || 0;
+                grandTotal += subtotal; totalItemsCount += items.length; completedItemsCount += completedCount;
+
+                const section = document.createElement('div');
+                section.className = "bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden category-card w-full flex flex-col mb-6";
+                section.innerHTML = `
+                    <div class="p-6 ${cat.color} text-white flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-white/20 p-2 rounded-2xl"><i data-lucide="${cat.icon}" class="w-4 h-4"></i></div>
+                            <h2 class="font-bold text-sm uppercase tracking-tight">${cat.title}</h2>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[8px] opacity-70 uppercase tracking-wider font-bold">Subtotal</p>
+                            <p class="font-mono font-bold text-sm">RM ${subtotal.toFixed(2)}</p>
+                        </div>
+                    </div>
+                    <div class="p-1 bg-slate-50"><div class="w-full bg-slate-200 h-1"><div class="bg-green-400 h-full transition-all duration-500" style="width: ${progress}%"></div></div></div>
+                    <div class="divide-y divide-slate-50 flex-grow" id="list-${cat.key}"></div>
+                    <div class="p-4 bg-slate-50/50 flex justify-center border-t border-slate-100 mt-auto">
+                        <button onclick="openModal('${cat.key}')" class="flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah Item
+                        </button>
+                    </div>
+                `;
+                container.appendChild(section);
+                const listContainer = document.getElementById(`list-${cat.key}`);
+                items.forEach(item => {
+                    if(!item) return;
+                    const row = document.createElement('div');
+                    row.className = `flex items-center p-4 gap-4 transition-colors ${item.completed ? 'bg-green-50/20' : 'hover:bg-slate-50'}`;
+                    row.innerHTML = `
+                        <button onclick="toggleItem('${cat.key}', ${item.id})" class="flex-shrink-0 transition-colors ${item.completed ? 'text-green-500' : 'text-slate-300'}"><i data-lucide="${item.completed ? 'check-circle-2' : 'circle'}" class="w-6 h-6 ${item.completed ? 'fill-green-500 text-white shadow-sm' : ''}"></i></button>
+                        <div class="flex-1 overflow-hidden"><input type="text" value="${item.name}" onchange="updateItemName('${cat.key}', ${item.id}, this.value)" class="w-full bg-transparent border-none focus:ring-0 p-0 text-xs md:text-sm font-semibold ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700'}"></div>
+                        <div class="flex items-center gap-1 bg-white rounded-xl px-3 py-1.5 border border-slate-100 shadow-sm"><span class="text-slate-300 text-[10px] font-bold">RM</span><input type="number" value="${item.price || ''}" placeholder="0" onchange="updateItemPrice('${cat.key}', ${item.id}, this.value)" class="w-14 md:w-16 bg-transparent border-none focus:ring-0 p-0 text-right font-mono font-bold text-slate-700 text-[10px] md:text-xs"></div>
+                        <button onclick="deleteItem('${cat.key}', ${item.id})" class="text-slate-200 hover:text-red-400 transition-colors p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    `;
+                    listContainer.appendChild(row);
+                });
+            });
+
+            document.getElementById('grand-total').innerText = `RM ${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+            document.getElementById('total-items').innerText = totalItemsCount;
+            document.getElementById('completed-items').innerText = completedItemsCount;
+            document.getElementById('floating-total').innerText = `RM ${Math.round(grandTotal)}`;
+            document.getElementById('floating-progress').innerText = `${Math.round((completedItemsCount / totalItemsCount) * 100) || 0}%`;
+            
+            updateCountdown();
+        }
+
+        window.toggleItem = (catKey, id) => {
+            state[catKey] = state[catKey].map(i => i.id === id ? {...i, completed: !i.completed} : i);
+            saveToCloud(state);
+        };
+
+        window.updateItemName = (catKey, id, val) => {
+            state[catKey] = state[catKey].map(i => i.id === id ? {...i, name: val} : i);
+            saveToCloud(state);
+        };
+
+        window.updateItemPrice = (catKey, id, val) => {
+            state[catKey] = state[catKey].map(i => i.id === id ? {...i, price: parseFloat(val) || 0} : i);
+            saveToCloud(state);
+        };
+
+        window.deleteItem = (catKey, id) => {
+            if (confirm("Padam item ini?")) {
+                state[catKey] = state[catKey].filter(i => i.id !== id);
+                saveToCloud(state);
+            }
+        };
+
+        window.updateEventInfo = (field, val) => {
+            if(!state.eventInfo) state.eventInfo = {...INITIAL_STATE.eventInfo};
+            state.eventInfo[field] = val;
+            saveToCloud(state);
+        };
+
+        window.resetDataToDefault = () => {
+            if(confirm('Reset semua data ke nilai asal?')) {
+                state = {...INITIAL_STATE};
+                saveToCloud(state);
+            }
+        };
+
+        window.openModal = (catKey) => {
+            currentActiveCategory = catKey;
+            document.getElementById('new-item-name').value = "";
+            document.getElementById('new-item-price').value = "";
+            document.getElementById('add-item-modal').classList.remove('hidden-modal');
+            document.getElementById('new-item-name').focus();
+        };
+
+        window.closeModal = () => document.getElementById('add-item-modal').classList.add('hidden-modal');
+
+        window.confirmAddItem = () => {
+            const name = document.getElementById('new-item-name').value;
+            const price = parseFloat(document.getElementById('new-item-price').value) || 0;
+            if (name && name.trim()) {
+                if(!state[currentActiveCategory]) state[currentActiveCategory] = [];
+                state[currentActiveCategory].push({ id: Date.now(), name: name.trim(), price, completed: false });
+                saveToCloud(state);
+                closeModal();
+            }
+        };
+
+        function updateCountdown() {
+            const eventInfo = state.eventInfo || INITIAL_STATE.eventInfo;
+            const target = new Date(eventInfo.date).getTime();
+            const now = new Date().getTime();
+            const diff = target - now;
+            if (isNaN(target) || diff < 0) {
+                ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => {
+                   const el = document.getElementById(id);
+                   if(el) el.innerText = "00";
+                });
+                return;
+            }
+            document.getElementById('cd-days').innerText = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(2, '0');
+            document.getElementById('cd-hours').innerText = String(Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+            document.getElementById('cd-mins').innerText = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+            document.getElementById('cd-secs').innerText = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+        }
+
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
