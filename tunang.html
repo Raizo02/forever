@@ -180,12 +180,12 @@
                         <input type="number" id="event-pax" placeholder="Pax" onchange="updateEventInfo('pax', this.value)" class="header-input w-20 md:w-24 text-center">
                     </div>
                     <div class="flex flex-col items-center">
-                        <span class="text-[8px] md:text-[10px] uppercase font-bold opacity-50 mb-1 tracking-widest">Tema Baju</span>
-                        <input type="text" id="event-theme" placeholder="Warna Baju" onchange="updateEventInfo('theme', this.value)" class="header-input w-24 md:w-32 text-center">
+                        <span class="text-[8px] md:text-[10px] uppercase font-bold opacity-50 mb-1 tracking-widest">Tema</span>
+                        <input type="text" id="event-theme" placeholder="Tema" onchange="updateEventInfo('theme', this.value)" class="header-input w-24 md:w-32 text-center">
                     </div>
                     <div class="flex flex-col items-center">
                         <span class="text-[8px] md:text-[10px] uppercase font-bold opacity-50 mb-1 tracking-widest">Pelamin</span>
-                        <input type="text" id="event-dais" placeholder="Warna Pelamin" onchange="updateEventInfo('dais', this.value)" class="header-input w-28 md:w-40 text-center">
+                        <input type="text" id="event-dais" placeholder="Pelamin" onchange="updateEventInfo('dais', this.value)" class="header-input w-28 md:w-40 text-center">
                     </div>
                 </div>
             </div>
@@ -270,6 +270,26 @@
         </div>
     </div>
 
+    <!-- Modal Kepastian Padam Item -->
+    <div id="delete-modal" class="modal-overlay hidden-modal fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="modal-content bg-white w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden text-center p-8">
+            <div class="inline-flex items-center justify-center p-4 bg-red-50 rounded-full mb-4">
+                <i data-lucide="trash-2" class="text-red-500 w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-800 mb-2 uppercase tracking-tight">Padam Item?</h3>
+            <p class="text-slate-400 text-sm mb-8 px-4">Adakah anda pasti mahu memadam <span id="delete-item-name" class="font-bold text-slate-700"></span>? Tindakan ini tidak boleh dibatalkan.</p>
+            
+            <div class="space-y-3">
+                <button onclick="confirmDelete()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-3xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs">
+                    Ya, Padam
+                </button>
+                <button onclick="closeDeleteModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold py-4 rounded-3xl transition-all active:scale-95 uppercase tracking-widest text-xs">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Kepastian Logout -->
     <div id="logout-modal" class="modal-overlay hidden-modal fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <div class="modal-content bg-white w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden text-center p-8">
@@ -315,22 +335,23 @@
         // 2. Initial State
         const INITIAL_STATE = {
             eventInfo: { date: '', pax: '', theme: '', dais: '' },
-            fifiClothes: [],
-            fifiDulang: [],
-            afiqClothes: [],
-            afiqDulang: [],
+            FClothes: [],
+            FDulang: [],
+            MClothes: [],
+            MDulang: [],
             others: []
         };
 
         let state = {...INITIAL_STATE};
         let currentUser = null;
         let currentActiveCategory = null;
+        let deleteContext = null; // { catKey, itemId }
 
         const categories = [
-            { key: 'fifiClothes', title: 'Pakaian Wanita', color: 'bg-pink-500', icon: 'user' },
-            { key: 'fifiDulang', title: 'Dulang Wanita', color: 'bg-indigo-500', icon: 'package' },
-            { key: 'afiqClothes', title: 'Pakaian Lelaki', color: 'bg-blue-600', icon: 'user' },
-            { key: 'afiqDulang', title: 'Dulang Lelaki', color: 'bg-cyan-600', icon: 'package' },
+            { key: 'FClothes', title: 'Pakaian Wanita', color: 'bg-pink-500', icon: 'user' },
+            { key: 'FDulang', title: 'Dulang Wanita', color: 'bg-indigo-500', icon: 'package' },
+            { key: 'MClothes', title: 'Pakaian Lelaki', color: 'bg-blue-600', icon: 'user' },
+            { key: 'MDulang', title: 'Dulang Lelaki', color: 'bg-cyan-600', icon: 'package' },
             { key: 'others', title: 'Lain-Lain', color: 'bg-slate-700', icon: 'truck' }
         ];
 
@@ -375,7 +396,30 @@
             closeLogoutModal();
         };
 
-        // 5. Auth State Observer
+        // 5. Delete Item Functions
+        window.deleteItem = (catKey, id) => {
+            const item = state[catKey].find(i => i.id === id);
+            if (!item) return;
+            
+            deleteContext = { catKey, id };
+            document.getElementById('delete-item-name').innerText = item.name;
+            document.getElementById('delete-modal').classList.remove('hidden-modal');
+        };
+
+        window.closeDeleteModal = () => {
+            document.getElementById('delete-modal').classList.add('hidden-modal');
+            deleteContext = null;
+        };
+
+        window.confirmDelete = () => {
+            if (deleteContext) {
+                state[deleteContext.catKey] = state[deleteContext.catKey].filter(i => i.id !== deleteContext.id);
+                saveToCloud(state);
+                closeDeleteModal();
+            }
+        };
+
+        // 6. Auth State Observer
         onAuthStateChanged(auth, (user) => {
             const loader = document.getElementById("initial-loader");
             const loginSec = document.getElementById("login-section");
@@ -403,7 +447,7 @@
             lucide.createIcons();
         });
 
-        // 6. Data & Sync Logic
+        // 7. Data & Sync Logic
         const setupDataListener = () => {
             if (!currentUser) return;
             const plannerRef = ref(database, 'engagementPlanner/' + currentUser.uid);
@@ -431,7 +475,7 @@
             }
         };
 
-        // 7. UI Render Functions
+        // 8. UI Render Functions
         function render() {
             const eventInfo = state.eventInfo || INITIAL_STATE.eventInfo;
             document.getElementById('event-date').value = eventInfo.date;
@@ -509,13 +553,6 @@
         window.updateItemPrice = (catKey, id, val) => {
             state[catKey] = state[catKey].map(i => i.id === id ? {...i, price: parseFloat(val) || 0} : i);
             saveToCloud(state);
-        };
-
-        window.deleteItem = (catKey, id) => {
-            if (confirm("Padam item ini?")) {
-                state[catKey] = state[catKey].filter(i => i.id !== id);
-                saveToCloud(state);
-            }
         };
 
         window.updateEventInfo = (field, val) => {
